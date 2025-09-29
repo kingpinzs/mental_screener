@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Comprehensive Self‑Screener</title>
+  <style>
+    :root {
+      --bg:#0f1216; --card:#131820; --muted:#7d8a9a; --text:#eef3f8; --accent:#4cc9f0; --warn:#ffb703; --danger:#ef476f; --ok:#06d6a0;
+      --bar1:#4cc9f0; --bar2:#06d6a0; --bar3:#ffb703; --bar4:#ef476f; --bar5:#9b5de5;
+    }
+    html,body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Arial,sans-serif;margin:0}
+    a{color:var(--accent)}
+    header{position:sticky;top:0;background:#0d1117;border-bottom:1px solid #1f2630;z-index:10}
+    .wrap{max-width:1100px;margin:0 auto;padding:16px}
+    .title{display:flex;gap:12px;align-items:center;justify-content:space-between}
+    .title h1{font-size:20px;margin:0;font-weight:700}
+    .title small{color:var(--muted)}
+    .bar{height:8px;background:#1f2630;border-radius:999px;overflow:hidden}
+    .bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--bar1),var(--bar2));width:0%}
+    .grid{display:grid;gap:16px}
+    @media(min-width:900px){.grid{grid-template-columns:260px 1fr}}
+    nav{position:sticky;top:64px;align-self:start;background:var(--card);border:1px solid #1f2630;border-radius:12px;padding:8px}
+    nav h3{font-size:12px;letter-spacing:.08em;color:var(--muted);margin:8px 8px 4px}
+    nav button{all:unset;display:block;width:100%;padding:10px 12px;border-radius:10px;color:var(--text);cursor:pointer}
+    nav button:hover{background:#151b23}
+    nav button.active{background:#1a212c;outline:1px solid #273140}
+    .card{background:var(--card);border:1px solid #1f2630;border-radius:16px;padding:16px}
+    .section h2{margin:0 0 4px;font-size:18px}
+    .muted{color:var(--muted);font-size:13px}
+    .q{padding:12px;border-radius:12px;border:1px solid #253042;margin:10px 0;background:#0f141c}
+    .q label{display:block;font-weight:600;margin-bottom:6px}
+    .opt{display:flex;flex-wrap:wrap;gap:10px}
+    .chip{display:inline-flex;align-items:center;gap:6px;background:#111723;border:1px solid #233045;border-radius:999px;padding:8px 10px;cursor:pointer}
+    input[type="radio"],input[type="checkbox"]{transform:scale(1.2)}
+    .range{display:flex;align-items:center;gap:12px}
+    .range output{min-width:2ch;text-align:right}
+    .controls{display:flex;flex-wrap:wrap;gap:10px}
+    .btn{background:#1a2432;border:1px solid #2b394d;color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer}
+    .btn.primary{background:linear-gradient(90deg,#2f80ed,#56ccf2);border:none}
+    .btn.warn{background:#34260f;border:1px solid #5e4310;color:#ffcf6e}
+    .btn.danger{background:#34141a;border:1px solid #5a1e2a;color:#ff99ad}
+    .summary{display:grid;gap:10px}
+    .row{display:grid;grid-template-columns:160px 1fr 48px;align-items:center;gap:10px}
+    .row .meter{height:10px;background:#0e141d;border:1px solid #233045;border-radius:999px;overflow:hidden}
+    .row .meter>i{display:block;height:100%;background:linear-gradient(90deg,var(--bar1),var(--bar2));width:0%}
+    .pill{display:inline-block;background:#0f1724;border:1px solid #2a3850;color:#b9c7db;padding:6px 8px;border-radius:999px;font-size:12px}
+    .danger-text{color:#ff99ad}
+    .ok-text{color:#9aedc1}
+    details{border:1px dashed #2b3647;border-radius:12px;padding:10px;margin:8px 0}
+    details>summary{cursor:pointer;color:#b5c0d0}
+    .footnote{font-size:12px;color:#9aa8bb}
+    .coach{display:flex;align-items:center;gap:8px}
+    .coach input{transform:scale(1.2)}
+    .tooltip{color:#b6c4d6;font-size:12px}
+    .hidden{display:none}
+    .redflag{border-left:4px solid var(--danger);padding-left:10px}
+    .greenflag{border-left:4px solid var(--ok);padding-left:10px}
+    @media print{header,nav,.controls{display:none} body{background:#fff;color:#000} .card{border:1px solid #ccc}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap title">
+      <div>
+        <h1>Comprehensive Self‑Screener</h1>
+        <small id="progress">0 answered</small>
+        <div class="bar"><i id="progressBar"></i></div>
+      </div>
+      <label class="coach"><input type="checkbox" id="coachToggle"/> <span>Coach mode</span></label>
+    </div>
+  </header>
+
+  <div class="wrap grid">
+    <nav id="nav"></nav>
+    <main id="main"></main>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+      <h2>Summary</h2>
+      <p class="muted">Click “Calculate Summary” below after answering what you can. You don’t need to finish everything. The dashboard will highlight likely lanes to investigate and any red‑flag items.</p>
+      <div class="controls">
+        <button class="btn primary" id="calcBtn">Calculate Summary</button>
+        <button class="btn" id="exportBtn">Export CSV</button>
+        <button class="btn" id="clearBtn">Clear Answers</button>
+        <button class="btn warn" id="printBtn">Print/PDF</button>
+      </div>
+      <div id="summary" class="summary" style="margin-top:12px"></div>
+      <div id="flags"></div>
+      <details>
+        <summary>About scoring</summary>
+        <div class="footnote">Each domain aggregates weighted responses and normalizes to 0–100. Higher = more signals in that lane. Red‑flag items surface regardless of domain totals. This is <em>screening</em> only—not diagnosis.</div>
+      </details>
+      <details>
+        <summary>Crisis resources (US)</summary>
+        <div class="footnote">If you are in immediate danger or thinking about self‑harm: Call/text <strong>988</strong> (Suicide & Crisis Lifeline) or dial <strong>911</strong>. You can also use <a href="https://www.988lifeline.org/" target="_blank" rel="noopener">988lifeline.org</a> for chat. If outside the US, please use local emergency numbers.</div>
+      </details>
+    </div>
+  </div>
+
+<script>
+// ======= CONFIGURABLE DATA =======
+const FREQ14 = [
+  {label:"Never (0 days)", value:0},
+  {label:"1–3 days", value:0.25},
+  {label:"4–7 days", value:0.5},
+  {label:"8–11 days", value:0.75},
+  {label:"12–14 days", value:1},
+];
+const TF = [{label:"No", value:0},{label:"Yes", value:1}];
+
+// Sections and items (keep factual/minimal reflection)
+// type: tf | mcq | scale | freq14
+// response values normalized 0..1 for scoring
+const SECTIONS = [
+  {
+    id:"safety", title:"Safety Check", desc:"Quick triage for urgent risks.", items:[
+      {id:"sui_thoughts", text:"In the past 2 weeks, have you had thoughts of harming yourself?", type:"tf", domain:"mood", weight:3, redFlag:true},
+      {id:"sui_plan", text:"Do you have a plan or intent to harm yourself?", type:"tf", domain:"mood", weight:5, redFlag:true},
+      {id:"halluc", text:"Any hallucinations (hearing/seeing things others don't)?", type:"tf", domain:"cog", weight:3, redFlag:true},
+      {id:"blackout", text:"Any blackouts or loss of time you can't explain?", type:"tf", domain:"dissoc", weight:4, redFlag:true},
+      {id:"thunderclap", text:"Sudden severe 'worst' headache with confusion or vision changes?", type:"tf", domain:"tbi", weight:5, redFlag:true},
+      {id:"lost_familiar", text:"Got lost in a familiar place in the past 2 weeks?", type:"tf", domain:"cog", weight:4, redFlag:true},
+      {id:"recent_head_hit", text:"Any recent head impact?", type:"mcq", options:[
+        {label:"No", value:0},
+        {label:"Minor bump, no symptoms", value:0.25},
+        {label:"Hit + symptoms (headache/dizzy)", value:0.7},
+        {label:"Loss of consciousness", value:1}
+      ], domain:"tbi", weight:4, redFlag:true},
+      {id:"weight_change", text:"Unintentional weight change >10 lb in last 3 months?", type:"mcq", options:[
+        {label:"No", value:0},
+        {label:"Yes—loss", value:1},
+        {label:"Yes—gain", value:0.6}
+      ], domain:"nutrition", weight:2}
+    ]
+  },
+  {
+    id:"grief", title:"Grief & Numbing", desc:"Signals common after profound loss.", items:[
+      {id:"numb", text:"Felt emotionally numb or 'shut down' (past 2 weeks)", type:"freq14", domain:"grief", weight:2},
+      {id:"avoid_reminders", text:"Avoided reminders of the person you lost", type:"freq14", domain:"grief", weight:1.5},
+      {id:"dreams", text:"Dreams about the person you lost", type:"freq14", domain:"grief", weight:1},
+      {id:"meaningless", text:"Life felt meaningless or empty", type:"freq14", domain:"grief", weight:2},
+      {id:"year_since", text:"Time since the loss", type:"mcq", options:[
+        {label:"< 6 months", value:1},
+        {label:"6–12 months", value:0.8},
+        {label:"> 12 months", value:0.5}
+      ], domain:"grief", weight:1}
+    ]
+  },
+  {
+    id:"ptsd", title:"Trauma / PTSD", desc:"Intrusions, avoidance, arousal, and freeze.", items:[
+      {id:"intrusions", text:"Unwanted memories of past events popped in", type:"freq14", domain:"ptsd", weight:2},
+      {id:"flashbacks", text:"Felt like you were reliving something from the past", type:"freq14", domain:"ptsd", weight:2},
+      {id:"nightmares", text:"Nightmares related to past events", type:"freq14", domain:"ptsd", weight:1.5},
+      {id:"avoidance", text:"Avoided places/people/topics that remind you", type:"freq14", domain:"ptsd", weight:1.5},
+      {id:"hypervigilance", text:"On guard / scanning (hypervigilant)", type:"freq14", domain:"ptsd", weight:1.3},
+      {id:"startle", text:"Jumped/startled more than usual", type:"freq14", domain:"ptsd", weight:1},
+      {id:"freeze", text:"Felt stuck/frozen/blanks for >30 min", type:"freq14", domain:"dissoc", weight:1.5}
+    ]
+  },
+  {
+    id:"dissoc", title:"Dissociation", desc:"Spacing out, time loss, unreal feelings.", items:[
+      {id:"time_loss", text:"Lost track of time / can't recall chunks of the day", type:"freq14", domain:"dissoc", weight:2},
+      {id:"depersonal", text:"Felt detached from your body (like watching yourself)", type:"freq14", domain:"dissoc", weight:1.5},
+      {id:"dereal", text:"World felt unreal / foggy / far away", type:"freq14", domain:"dissoc", weight:1.5}
+    ]
+  },
+  {
+    id:"tbi", title:"Head Injury / Neurology", desc:"Post‑concussion and neuro signs.", items:[
+      {id:"headache", text:"Headaches", type:"freq14", domain:"tbi", weight:1.5},
+      {id:"light_sens", text:"Light sensitivity", type:"freq14", domain:"tbi", weight:1},
+      {id:"sound_sens", text:"Sound sensitivity", type:"freq14", domain:"tbi", weight:1},
+      {id:"dizzy", text:"Dizziness/vertigo", type:"freq14", domain:"tbi", weight:1.3},
+      {id:"nausea", text:"Nausea with head movement", type:"freq14", domain:"tbi", weight:1},
+      {id:"slowed", text:"Thinking feels slowed", type:"freq14", domain:"tbi", weight:1.5},
+      {id:"balance", text:"Balance problems", type:"freq14", domain:"tbi", weight:1.2}
+    ]
+  },
+  {
+    id:"cog", title:"Cognitive Decline Signals", desc:"Track progressive changes.", items:[
+      {id:"repeat_q", text:"Repeat the same questions because you forget answers", type:"freq14", domain:"cog", weight:1.6},
+      {id:"forget_recent", text:"Forget recent events or conversations", type:"freq14", domain:"cog", weight:1.8},
+      {id:"misplace", text:"Misplace items more than usual", type:"freq14", domain:"cog", weight:1.2},
+      {id:"manage_bills", text:"Trouble managing bills/meds that used to be easy", type:"freq14", domain:"cog", weight:1.6},
+      {id:"word_find", text:"Word‑finding difficulty", type:"freq14", domain:"cog", weight:1.3},
+      {id:"getting_lost", text:"Getting lost in familiar places", type:"freq14", domain:"cog", weight:2}
+    ]
+  },
+  {
+    id:"adhd", title:"ADHD Signals", desc:"Executive function and attention (esp. lifelong).", items:[
+      {id:"since_child", text:"Attention/organization issues since childhood", type:"mcq", options:[
+        {label:"No", value:0},
+        {label:"Unclear", value:0.5},
+        {label:"Yes", value:1}
+      ], domain:"adhd", weight:2},
+      {id:"procrast", text:"Procrastination / task initiation trouble", type:"freq14", domain:"adhd", weight:1.4},
+      {id:"time_blind", text:"Time blindness (lose track of time)", type:"freq14", domain:"adhd", weight:1.4},
+      {id:"finish_tasks", text:"Hard to finish tasks", type:"freq14", domain:"adhd", weight:1.2},
+      {id:"impulse", text:"Impulsivity / interrupting", type:"freq14", domain:"adhd", weight:1},
+      {id:"disorg", text:"Disorganization / clutter", type:"freq14", domain:"adhd", weight:1.2}
+    ]
+  },
+  {
+    id:"asd", title:"Autism Spectrum Signals", desc:"Sensory/social patterns (often lifelong).", items:[
+      {id:"sens_overwhelm", text:"Sensory overwhelm (noise/light/textures)", type:"freq14", domain:"asd", weight:1.4},
+      {id:"routine", text:"Strong preference for routines / distress with change", type:"freq14", domain:"asd", weight:1.2},
+      {id:"social_cues", text:"Difficulty reading social cues", type:"freq14", domain:"asd", weight:1.2},
+      {id:"masking", text:"Social masking leaves you exhausted", type:"freq14", domain:"asd", weight:1.2},
+      {id:"special_interests", text:"Intense/sustained special interests", type:"freq14", domain:"asd", weight:1}
+    ]
+  },
+  {
+    id:"sleep", title:"Sleep", desc:"Quantity and quality.", items:[
+      {id:"hours_sleep", text:"Average hours slept per night (past week)", type:"mcq", options:[
+        {label:"<4 h", value:1},
+        {label:"4–5 h", value:0.8},
+        {label:"6–7 h", value:0.5},
+        {label:"7–9 h", value:0.2},
+        {label:">9 h", value:0.6}
+      ], domain:"sleep", weight:1.6},
+      {id:"insomnia", text:"Trouble falling or staying asleep", type:"freq14", domain:"sleep", weight:1.4},
+      {id:"snore", text:"Loud snoring or witnessed apnea", type:"tf", domain:"sleep", weight:1.2},
+      {id:"night_wake", text:"Wake unrefreshed / multiple night awakenings", type:"freq14", domain:"sleep", weight:1.2}
+    ]
+  },
+  {
+    id:"nutrition", title:"Nutrition & Hydration", desc:"Low‑effort dietary signals.", items:[
+      {id:"meals", text:"Meals per day (avg)", type:"mcq", options:[
+        {label:"0–1", value:1}, {label:"2", value:0.8}, {label:"3", value:0.4}, {label:"4+", value:0.6}
+      ], domain:"nutrition", weight:1.2},
+      {id:"water", text:"Cups of water per day (avg)", type:"mcq", options:[
+        {label:"0–2", value:1},{label:"3–4", value:0.8},{label:"5–7", value:0.5},{label:"8+", value:0.2}
+      ], domain:"nutrition", weight:1.2},
+      {id:"sugar", text:"Sugary/ultra‑processed servings per day", type:"mcq", options:[
+        {label:"0–1", value:0.3},{label:"2–3", value:0.6},{label:"4–6", value:0.8},{label:"7+", value:1}
+      ], domain:"nutrition", weight:1},
+      {id:"fruitveg", text:"Fruit/veg servings per day", type:"mcq", options:[
+        {label:"0", value:1},{label:"1", value:0.8},{label:"2–3", value:0.5},{label:"4+", value:0.2}
+      ], domain:"nutrition", weight:1}
+    ]
+  },
+  {
+    id:"substance", title:"Substances", desc:"Alcohol/cannabis/other—screen only.", items:[
+      {id:"alcohol", text:"Alcohol use (drinks per day avg)", type:"mcq", options:[
+        {label:"0", value:0},{label:"1", value:0.2},{label:"2–3", value:0.6},{label:"4+", value:1}
+      ], domain:"substance", weight:1.2},
+      {id:"cannabis", text:"Cannabis use (past 2 weeks)", type:"mcq", options:[
+        {label:"None", value:0},{label:"Occasional", value:0.4},{label:"Daily", value:0.8},{label:"Multiple times/day", value:1}
+      ], domain:"substance", weight:1},
+      {id:"sedatives", text:"Sedatives/opioids/benzos without close medical guidance", type:"tf", domain:"substance", weight:1.5}
+    ]
+  },
+  {
+    id:"mood", title:"Mood & Anxiety", desc:"Low motivation, worry, panic.", items:[
+      {id:"sad", text:"Felt down/empty", type:"freq14", domain:"mood", weight:1.4},
+      {id:"anhedonia", text:"Little interest/pleasure in things", type:"freq14", domain:"mood", weight:1.6},
+      {id:"worry", text:"Excessive worry / racing thoughts", type:"freq14", domain:"mood", weight:1.2},
+      {id:"panic", text:"Panic attacks or near‑panic", type:"freq14", domain:"mood", weight:1.3},
+      {id:"irritable", text:"Irritability / anger bursts", type:"freq14", domain:"mood", weight:1}
+    ]
+  },
+  {
+    id:"stress", title:"Stress & Burnout", desc:"Overwhelm and depletion.", items:[
+      {id:"overwhelm", text:"Felt overwhelmed by routine tasks", type:"freq14", domain:"stress", weight:1.4},
+      {id:"exhaust", text:"Exhaustion not relieved by rest", type:"freq14", domain:"stress", weight:1.4},
+      {id:"avoid_work", text:"Avoided tasks/work you usually do", type:"freq14", domain:"stress", weight:1.2},
+      {id:"cynicism", text:"Cynicism / detachment", type:"freq14", domain:"stress", weight:1}
+    ]
+  },
+  {
+    id:"exec", title:"Executive Function", desc:"Planning, organization, follow‑through.", items:[
+      {id:"initiate", text:"Hard to start tasks even when important", type:"freq14", domain:"exec", weight:1.3},
+      {id:"organize", text:"Trouble organizing steps/materials", type:"freq14", domain:"exec", weight:1.2},
+      {id:"lose_items", text:"Lose items (keys, wallet, phone)", type:"freq14", domain:"exec", weight:1},
+      {id:"switch", text:"Hard to switch tasks once engaged", type:"freq14", domain:"exec", weight:1}
+    ]
+  },
+  {
+    id:"memory", title:"Memory Specifics", desc:"Short‑term and prospective memory.", items:[
+      {id:"appt", text:"Forgot appointments despite reminders", type:"freq14", domain:"memory", weight:1.4},
+      {id:"conv", text:"Forgot parts of recent conversations", type:"freq14", domain:"memory", weight:1.4},
+      {id:"day_gaps", text:"Can't recall parts of the day", type:"freq14", domain:"memory", weight:1.6}
+    ]
+  },
+  {
+    id:"sensory", title:"Sensory", desc:"Noise/light/touch sensitivity.", items:[
+      {id:"noise", text:"Noise feels painful or overwhelming", type:"freq14", domain:"sensory", weight:1.2},
+      {id:"light", text:"Bright light triggers discomfort/headache", type:"freq14", domain:"sensory", weight:1.2},
+      {id:"touch", text:"Certain fabrics/textures feel intolerable", type:"freq14", domain:"sensory", weight:1}
+    ]
+  },
+  {
+    id:"support", title:"Social & Support", desc:"People and structure around you.", items:[
+      {id:"isolation", text:"Spent most days alone / isolated", type:"freq14", domain:"social", weight:1.2},
+      {id:"has_support", text:"Have at least one person you can call for help", type:"tf", domain:"social", weight:1, invert:true},
+      {id:"structure", text:"Followed any daily routine (meals, walk, sleep set time)", type:"freq14", domain:"social", weight:1, invert:true}
+    ]
+  }
+];
+
+// Domains list for summary display order
+const DOMAINS = [
+  {id:"grief", label:"Grief/Numbing"},
+  {id:"ptsd", label:"Trauma/PTSD"},
+  {id:"dissoc", label:"Dissociation"},
+  {id:"tbi", label:"Head Injury/TBI"},
+  {id:"cog", label:"Cognitive Decline"},
+  {id:"adhd", label:"ADHD"},
+  {id:"asd", label:"Autism Spectrum"},
+  {id:"sleep", label:"Sleep"},
+  {id:"nutrition", label:"Nutrition/Hydration"},
+  {id:"substance", label:"Substances"},
+  {id:"mood", label:"Mood/Anxiety"},
+  {id:"stress", label:"Stress/Burnout"},
+  {id:"exec", label:"Executive Function"},
+  {id:"memory", label:"Memory"},
+  {id:"sensory", label:"Sensory"},
+  {id:"social", label:"Support/Structure"}
+];
+
+// ======= RENDERING =======
+const navEl = document.getElementById('nav');
+const mainEl = document.getElementById('main');
+const coachToggle = document.getElementById('coachToggle');
+
+function renderNav(){
+  let html = '<h3>Sections</h3>';
+  SECTIONS.forEach((s,idx)=>{
+    html += `<button data-goto="${s.id}" class="${idx===0?'active':''}">${idx+1}. ${s.title}</button>`;
+  });
+  navEl.innerHTML = html;
+  navEl.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>goto(btn.dataset.goto)));
+}
+
+function renderSections(){
+  mainEl.innerHTML = SECTIONS.map((s,idx)=>{
+    return `<section class="card section" id="${s.id}" ${idx!==0? 'style="display:none"':''}>
+      <h2>${s.title}</h2>
+      <p class="muted">${s.desc}</p>
+      ${s.items.map(renderItem).join('')}
+    </section>`
+  }).join('');
+  attachItemHandlers();
+}
+
+function renderItem(it){
+  const tip = coachToggle.checked ? `<div class="tooltip">${hintFor(it)}</div>` : '';
+  if(it.type==='tf' || it.type==='mcq'){
+    const opts = (it.options||TF).map((o,i)=>{
+      const name = it.id;
+      const checked = getAns(it.id)?.value===o.value ? 'checked':'';
+      return `<label class="chip"><input type="radio" name="${name}" value="${o.value}" ${checked}/> ${o.label}</label>`
+    }).join('');
+    return `<div class="q" data-id="${it.id}" data-type="${it.type}" data-domain="${it.domain}" data-weight="${it.weight||1}" data-invert="${it.invert?1:0}" data-redflag="${it.redFlag?1:0}">
+      <label>${it.text}</label>
+      <div class="opt">${opts}</div>
+      ${tip}
+    </div>`
+  }
+  if(it.type==='freq14'){
+    const opts = FREQ14.map((o)=>{
+      const name = it.id;
+      const checked = getAns(it.id)?.value===o.value ? 'checked':'';
+      return `<label class="chip"><input type="radio" name="${name}" value="${o.value}" ${checked}/> ${o.label}</label>`
+    }).join('');
+    return `<div class="q" data-id="${it.id}" data-type="${it.type}" data-domain="${it.domain}" data-weight="${it.weight||1}" data-invert="${it.invert?1:0}">
+      <label>${it.text}</label>
+      <div class="opt">${opts}</div>
+      ${tip}
+    </div>`
+  }
+  if(it.type==='scale'){
+    const val = getAns(it.id)?.value ?? 0.5;
+    return `<div class="q" data-id="${it.id}" data-type="${it.type}" data-domain="${it.domain}" data-weight="${it.weight||1}">
+      <label>${it.text}</label>
+      <div class="range"><input type="range" min="0" max="10" step="1" value="${Math.round(val*10)}"/><output>${Math.round(val*10)}</output></div>
+      ${tip}
+    </div>`
+  }
+  return ''
+}
+
+function hintFor(it){
+  const map = {
+    mood:"Low motivation and anhedonia can come from grief, depression, or chronic stress.",
+    ptsd:"Intrusions + avoidance + hyperarousal together point toward trauma processing.",
+    tbi:"Headache + dizziness + light/sound sensitivity may indicate post‑concussion.",
+    cog:"Progressive forgetting and getting lost are red‑flag cognitive changes.",
+    dissoc:"Time loss and detachment are dissociation signals (often trauma‑linked).",
+    adhd:"Lifelong patterns of inattention/disorganization suggest ADHD.",
+    asd:"Sensory overwhelm and routine rigidity are common in autism spectrum.",
+    sleep:"Short/fragmented sleep worsens memory and mood.",
+    nutrition:"Low hydration and ultra‑processed foods can amplify brain fog.",
+    substance:"Alcohol/cannabis/sedatives can mask or mimic symptoms.",
+    stress:"Burnout = exhaustion + cynicism + reduced efficiency.",
+    exec:"Executive function covers start/plan/finish—often overlaps with ADHD/stress.",
+    memory:"Prospective (appointments) + recent recall point to working memory/attention.",
+    sensory:"Light/noise/touch overload interacts with TBI/ASD/anxiety.",
+    social:"Support and routine buffer all domains."
+  };
+  return map[it.domain]||"";
+}
+
+function goto(id){
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active', b.dataset.goto===id));
+  document.querySelectorAll('main .section').forEach(s=>s.style.display = (s.id===id? 'block':'none'));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ======= STATE =======
+const KEY='screener_v1';
+function getState(){ try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch{ return {} } }
+function setState(s){ localStorage.setItem(KEY, JSON.stringify(s)) }
+function getAns(id){ return getState()[id] }
+
+function attachItemHandlers(){
+  document.querySelectorAll('.q').forEach(q=>{
+    const type=q.dataset.type; const id=q.dataset.id;
+    if(type==='tf' || type==='mcq' || type==='freq14'){
+      q.querySelectorAll('input[type="radio"]').forEach(r=>{
+        r.addEventListener('change',()=>{
+          const value = parseFloat(r.value);
+          const label = r.parentElement.textContent.trim();
+          const s=getState(); s[id]={value,label}; setState(s); updateProgress();
+        })
+      })
+    }
+    if(type==='scale'){
+      const rng=q.querySelector('input[type="range"]');
+      const out=q.querySelector('output');
+      rng.addEventListener('input',()=>{ out.textContent=rng.value; const s=getState(); s[id]={value:(+rng.value)/10,label:rng.value}; setState(s); updateProgress(); })
+    }
+  })
+}
+
+function updateProgress(){
+  const total = SECTIONS.reduce((acc,s)=>acc+s.items.length,0);
+  const answered = Object.keys(getState()).length;
+  document.getElementById('progress').textContent = `${answered} / ${total} answered`;
+  const pct = Math.min(100, Math.round((answered/total)*100));
+  document.getElementById('progressBar').style.width = pct+"%";
+}
+
+// ======= SCORING =======
+function calculate(){
+  const state=getState();
+  const sums = {}; const weights = {}; const redFlags=[];
+  DOMAINS.forEach(d=>{sums[d.id]=0;weights[d.id]=0});
+
+  SECTIONS.forEach(sec=>sec.items.forEach(it=>{
+    const ans = state[it.id];
+    if(!ans) return;
+    let v = parseFloat(ans.value);
+    if(Number.isNaN(v)) return;
+    if(it.invert) v = 1 - v; // positive inverse items
+    const w = it.weight||1;
+    sums[it.domain] += v * w;
+    weights[it.domain] += w;
+    if(it.redFlag && v>=0.5){ redFlags.push({id:it.id, text:it.text}) }
+  }));
+
+  const results = DOMAINS.map(d=>{
+    const raw = sums[d.id]; const max = Math.max(0.0001, weights[d.id]);
+    const norm = Math.round((raw/max)*100);
+    return {domain:d.id, label:d.label, score:Math.max(0, Math.min(100, norm))};
+  });
+  return {results, redFlags};
+}
+
+function colorForScore(p){
+  if(p<35) return 'linear-gradient(90deg,#00c2ff,#00e7a7)';
+  if(p<65) return 'linear-gradient(90deg,#ffd166,#ff9f1c)';
+  return 'linear-gradient(90deg,#ff6b6b,#c9184a)';
+}
+
+function showSummary(){
+  const {results, redFlags} = calculate();
+  const sumEl = document.getElementById('summary');
+  sumEl.innerHTML = results.map(r=>{
+    return `<div class="row"><div>${r.label}</div><div class="meter"><i style="width:${r.score}%;background:${colorForScore(r.score)}"></i></div><div>${r.score}</div></div>`
+  }).join('');
+
+  const flags = document.getElementById('flags');
+  if(redFlags.length){
+    flags.innerHTML = `<div class="q redflag"><strong class="danger-text">Red flags:</strong><ul>${redFlags.map(f=>`<li>${f.text}</li>`).join('')}</ul><div class="footnote">Consider urgent professional input for items above (e.g., 988/911 for safety; ER for severe acute neuro symptoms).</div></div>`
+  } else {
+    flags.innerHTML = `<div class="q greenflag"><strong class="ok-text">No critical red flags marked.</strong> Continue tracking and address highest‑scoring lanes first.</div>`
+  }
+}
+
+// ======= EXPORT =======
+function exportCSV(){
+  const state = getState();
+  const rows = [["timestamp","section","id","question","response_label","response_value"]];
+  const ts = new Date().toISOString();
+  SECTIONS.forEach(sec=>{
+    sec.items.forEach(it=>{
+      const ans = state[it.id];
+      rows.push([ts, sec.title, it.id, it.text.replaceAll('"','\''), ans? (ans.label||''):'', ans? ans.value:'' ]);
+    })
+  });
+  // Domain summary
+  const {results} = calculate();
+  rows.push([ts, 'SUMMARY', '---','Domain Score (0-100)','', '']);
+  results.forEach(r=> rows.push([ts,'SUMMARY',r.domain,r.label,'',r.score]));
+
+  const csv = rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `screener_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+// ======= INIT =======
+renderNav();
+renderSections();
+updateProgress();
+
+// Events
+coachToggle.addEventListener('change', ()=>{ renderSections(); goto(document.querySelector('nav button.active')?.dataset.goto||SECTIONS[0].id) });
+
+document.getElementById('calcBtn').addEventListener('click', showSummary);
+
+document.getElementById('exportBtn').addEventListener('click', exportCSV);
+
+document.getElementById('clearBtn').addEventListener('click', ()=>{ if(confirm('Clear all answers?')){ localStorage.removeItem(KEY); renderSections(); updateProgress(); document.getElementById('summary').innerHTML=''; document.getElementById('flags').innerHTML=''; }});
+
+document.getElementById('printBtn').addEventListener('click', ()=>window.print());
+</script>
+</body>
+</html>
