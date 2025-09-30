@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Comprehensive Self‑Screener</title>
+  <title>Comprehensive Self‑Screener & Overlap Explorer</title>
   <style>
     :root {
       --bg:#0f1216; --card:#131820; --muted:#7d8a9a; --text:#eef3f8; --accent:#4cc9f0; --warn:#ffb703; --danger:#ef476f; --ok:#06d6a0;
@@ -12,20 +12,23 @@
     html,body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Arial,sans-serif;margin:0}
     a{color:var(--accent)}
     header{position:sticky;top:0;background:#0d1117;border-bottom:1px solid #1f2630;z-index:10}
-    .wrap{max-width:1100px;margin:0 auto;padding:16px}
+    .wrap{max-width:1180px;margin:0 auto;padding:16px}
     .title{display:flex;gap:12px;align-items:center;justify-content:space-between}
     .title h1{font-size:20px;margin:0;font-weight:700}
     .title small{color:var(--muted)}
     .bar{height:8px;background:#1f2630;border-radius:999px;overflow:hidden}
     .bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--bar1),var(--bar2));width:0%}
     .grid{display:grid;gap:16px}
-    @media(min-width:900px){.grid{grid-template-columns:260px 1fr}}
+    @media(min-width:980px){.grid{grid-template-columns:280px 1fr}}
     nav{position:sticky;top:64px;align-self:start;background:var(--card);border:1px solid #1f2630;border-radius:12px;padding:8px}
     nav h3{font-size:12px;letter-spacing:.08em;color:var(--muted);margin:8px 8px 4px}
     nav button{all:unset;display:block;width:100%;padding:10px 12px;border-radius:10px;color:var(--text);cursor:pointer}
     nav button:hover{background:#151b23}
     nav button.active{background:#1a212c;outline:1px solid #273140}
     .card{background:var(--card);border:1px solid #1f2630;border-radius:16px;padding:16px}
+    .hero{display:grid;gap:12px}
+    .hero h2{margin:0}
+    .hero ul{margin:0 0 0 18px}
     .section h2{margin:0 0 4px;font-size:18px}
     .muted{color:var(--muted);font-size:13px}
     .q{padding:12px;border-radius:12px;border:1px solid #253042;margin:10px 0;background:#0f141c}
@@ -41,7 +44,7 @@
     .btn.warn{background:#34260f;border:1px solid #5e4310;color:#ffcf6e}
     .btn.danger{background:#34141a;border:1px solid #5a1e2a;color:#ff99ad}
     .summary{display:grid;gap:10px}
-    .row{display:grid;grid-template-columns:160px 1fr 48px;align-items:center;gap:10px}
+    .row{display:grid;grid-template-columns:200px 1fr 48px;align-items:center;gap:10px}
     .row .meter{height:10px;background:#0e141d;border:1px solid #233045;border-radius:999px;overflow:hidden}
     .row .meter>i{display:block;height:100%;background:linear-gradient(90deg,var(--bar1),var(--bar2));width:0%}
     .pill{display:inline-block;background:#0f1724;border:1px solid #2a3850;color:#b9c7db;padding:6px 8px;border-radius:999px;font-size:12px}
@@ -56,6 +59,9 @@
     .hidden{display:none}
     .redflag{border-left:4px solid var(--danger);padding-left:10px}
     .greenflag{border-left:4px solid var(--ok);padding-left:10px}
+    .table{width:100%;border-collapse:collapse}
+    .table th,.table td{border:1px solid #263246;padding:8px;text-align:left}
+    .chipmini{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid #2a3750;background:#0e1622;font-size:12px}
     @media print{header,nav,.controls{display:none} body{background:#fff;color:#000} .card{border:1px solid #ccc}}
   </style>
 </head>
@@ -63,7 +69,7 @@
   <header>
     <div class="wrap title">
       <div>
-        <h1>Comprehensive Self‑Screener</h1>
+        <h1>Comprehensive Self‑Screener & Overlap Explorer</h1>
         <small id="progress">0 answered</small>
         <div class="bar"><i id="progressBar"></i></div>
       </div>
@@ -79,7 +85,7 @@
   <div class="wrap">
     <div class="card">
       <h2>Summary</h2>
-      <p class="muted">Click “Calculate Summary” below after answering what you can. You don’t need to finish everything. The dashboard will highlight likely lanes to investigate and any red‑flag items.</p>
+      <p class="muted">Click “Calculate Summary” after answering what you can. You don’t need to finish everything. The dashboard will show domain scores and overlaps.</p>
       <div class="controls">
         <button class="btn primary" id="calcBtn">Calculate Summary</button>
         <button class="btn" id="exportBtn">Export CSV</button>
@@ -87,14 +93,19 @@
         <button class="btn warn" id="printBtn">Print/PDF</button>
       </div>
       <div id="summary" class="summary" style="margin-top:12px"></div>
+      <div id="overlap"></div>
       <div id="flags"></div>
       <details>
         <summary>About scoring</summary>
-        <div class="footnote">Each domain aggregates weighted responses and normalizes to 0–100. Higher = more signals in that lane. Red‑flag items surface regardless of domain totals. This is <em>screening</em> only—not diagnosis.</div>
+        <div class="footnote">Each domain aggregates weighted responses and normalizes to 0–100. Higher = more signals in that lane. Overlap scores highlight combined domains that co‑elevate. This is <em>screening</em> only—not diagnosis.</div>
       </details>
       <details>
         <summary>Crisis resources (US)</summary>
-        <div class="footnote">If you are in immediate danger or thinking about self‑harm: Call/text <strong>988</strong> (Suicide & Crisis Lifeline) or dial <strong>911</strong>. You can also use <a href="https://www.988lifeline.org/" target="_blank" rel="noopener">988lifeline.org</a> for chat. If outside the US, please use local emergency numbers.</div>
+        <div class="footnote">If you are in immediate danger or thinking about self‑harm: Call/text <strong>988</strong> (Suicide & Crisis Lifeline) or dial <strong>911</strong>. You can also use <a href="https://www.988lifeline.org/" target="_blank" rel="noopener">988lifeline.org</a> for chat. If outside the US, use local emergency numbers.</div>
+      </details>
+      <details>
+        <summary>Diagnostics</summary>
+        <div id="testOutput" class="footnote"></div>
       </details>
     </div>
   </div>
@@ -110,10 +121,38 @@ const FREQ14 = [
 ];
 const TF = [{label:"No", value:0},{label:"Yes", value:1}];
 
-// Sections and items (keep factual/minimal reflection)
+// ===== Front page =====
+const FRONT = {
+  id:"front", title:"Start Here", desc:"Overview, what this covers, and how to use.", items:[]
+};
+
+const COVERAGE_HTML = `
+  <section class="card section" id="front">
+    <div class="hero">
+      <h2>What this screens</h2>
+      <p class="muted">This tool helps you map patterns across <strong>16 domains</strong> that often overlap: Grief, Trauma/PTSD, Dissociation, Head Injury/TBI, Cognitive Decline, ADHD, Autism, Sleep, Nutrition/Hydration, Substances, Mood/Anxiety, Stress/Burnout, Executive Function, Memory, Sensory, Support/Structure.</p>
+      <h3>How to use</h3>
+      <ul>
+        <li>Answer with <em>observable facts</em> (Yes/No, frequency, multiple choice). No deep self‑reflection required.</li>
+        <li>Hit <strong>Calculate Summary</strong> to view domain scores and <strong>Overlap Explorer</strong> (which domains co‑elevate).</li>
+        <li>Export as CSV for your doctor/therapist.</li>
+      </ul>
+      <h3>What to do with results</h3>
+      <ul>
+        <li>Highest domains → focus lanes for next steps.</li>
+        <li>Overlaps (e.g., <span class="chipmini">TBI</span> + <span class="chipmini">Sleep</span>) suggest interactions to treat together.</li>
+        <li>Red flags (safety, blackouts, thunderclap headache) → seek urgent care.</li>
+      </ul>
+      <div class="controls">
+        <button class="btn primary" onclick="goto(SECTIONS[1].id)">Start Screener</button>
+      </div>
+    </div>
+  </section>`;
+
+// ===== Sections and items (expanded) =====
 // type: tf | mcq | scale | freq14
-// response values normalized 0..1 for scoring
 const SECTIONS = [
+  FRONT,
   {
     id:"safety", title:"Safety Check", desc:"Quick triage for urgent risks.", items:[
       {id:"sui_thoughts", text:"In the past 2 weeks, have you had thoughts of harming yourself?", type:"tf", domain:"mood", weight:3, redFlag:true},
@@ -145,7 +184,9 @@ const SECTIONS = [
         {label:"< 6 months", value:1},
         {label:"6–12 months", value:0.8},
         {label:"> 12 months", value:0.5}
-      ], domain:"grief", weight:1}
+      ], domain:"grief", weight:1},
+      {id:"keepsakes", text:"Avoided or clung to keepsakes strongly", type:"freq14", domain:"grief", weight:1},
+      {id:"identity_shift", text:"Sense of identity changed or feels empty", type:"freq14", domain:"grief", weight:1.4}
     ]
   },
   {
@@ -156,14 +197,17 @@ const SECTIONS = [
       {id:"avoidance", text:"Avoided places/people/topics that remind you", type:"freq14", domain:"ptsd", weight:1.5},
       {id:"hypervigilance", text:"On guard / scanning (hypervigilant)", type:"freq14", domain:"ptsd", weight:1.3},
       {id:"startle", text:"Jumped/startled more than usual", type:"freq14", domain:"ptsd", weight:1},
-      {id:"freeze", text:"Felt stuck/frozen/blanks for >30 min", type:"freq14", domain:"dissoc", weight:1.5}
+      {id:"freeze", text:"Felt stuck/frozen/blanks for >30 min", type:"freq14", domain:"dissoc", weight:1.5},
+      {id:"guilt", text:"Guilt/shame related to past events", type:"freq14", domain:"ptsd", weight:1},
+      {id:"anger", text:"Anger surges tied to reminders", type:"freq14", domain:"ptsd", weight:1}
     ]
   },
   {
     id:"dissoc", title:"Dissociation", desc:"Spacing out, time loss, unreal feelings.", items:[
       {id:"time_loss", text:"Lost track of time / can't recall chunks of the day", type:"freq14", domain:"dissoc", weight:2},
       {id:"depersonal", text:"Felt detached from your body (like watching yourself)", type:"freq14", domain:"dissoc", weight:1.5},
-      {id:"dereal", text:"World felt unreal / foggy / far away", type:"freq14", domain:"dissoc", weight:1.5}
+      {id:"dereal", text:"World felt unreal / foggy / far away", type:"freq14", domain:"dissoc", weight:1.5},
+      {id:"numbing_beh", text:"Used numbing behaviors (overwork, scrolling, bingeing)", type:"freq14", domain:"dissoc", weight:1}
     ]
   },
   {
@@ -174,7 +218,9 @@ const SECTIONS = [
       {id:"dizzy", text:"Dizziness/vertigo", type:"freq14", domain:"tbi", weight:1.3},
       {id:"nausea", text:"Nausea with head movement", type:"freq14", domain:"tbi", weight:1},
       {id:"slowed", text:"Thinking feels slowed", type:"freq14", domain:"tbi", weight:1.5},
-      {id:"balance", text:"Balance problems", type:"freq14", domain:"tbi", weight:1.2}
+      {id:"balance", text:"Balance problems", type:"freq14", domain:"tbi", weight:1.2},
+      {id:"photophobia", text:"Screens worsen symptoms", type:"freq14", domain:"tbi", weight:1},
+      {id:"neck_pain", text:"Neck pain/stiffness", type:"freq14", domain:"tbi", weight:0.8}
     ]
   },
   {
@@ -184,7 +230,8 @@ const SECTIONS = [
       {id:"misplace", text:"Misplace items more than usual", type:"freq14", domain:"cog", weight:1.2},
       {id:"manage_bills", text:"Trouble managing bills/meds that used to be easy", type:"freq14", domain:"cog", weight:1.6},
       {id:"word_find", text:"Word‑finding difficulty", type:"freq14", domain:"cog", weight:1.3},
-      {id:"getting_lost", text:"Getting lost in familiar places", type:"freq14", domain:"cog", weight:2}
+      {id:"getting_lost", text:"Getting lost in familiar places", type:"freq14", domain:"cog", weight:2},
+      {id:"progression", text:"These issues are gradually getting worse over months", type:"tf", domain:"cog", weight:1.8}
     ]
   },
   {
@@ -198,7 +245,8 @@ const SECTIONS = [
       {id:"time_blind", text:"Time blindness (lose track of time)", type:"freq14", domain:"adhd", weight:1.4},
       {id:"finish_tasks", text:"Hard to finish tasks", type:"freq14", domain:"adhd", weight:1.2},
       {id:"impulse", text:"Impulsivity / interrupting", type:"freq14", domain:"adhd", weight:1},
-      {id:"disorg", text:"Disorganization / clutter", type:"freq14", domain:"adhd", weight:1.2}
+      {id:"disorg", text:"Disorganization / clutter", type:"freq14", domain:"adhd", weight:1.2},
+      {id:"hyperfocus", text:"Hyperfocus on interests while other tasks pile up", type:"freq14", domain:"adhd", weight:1}
     ]
   },
   {
@@ -207,7 +255,8 @@ const SECTIONS = [
       {id:"routine", text:"Strong preference for routines / distress with change", type:"freq14", domain:"asd", weight:1.2},
       {id:"social_cues", text:"Difficulty reading social cues", type:"freq14", domain:"asd", weight:1.2},
       {id:"masking", text:"Social masking leaves you exhausted", type:"freq14", domain:"asd", weight:1.2},
-      {id:"special_interests", text:"Intense/sustained special interests", type:"freq14", domain:"asd", weight:1}
+      {id:"special_interests", text:"Intense/sustained special interests", type:"freq14", domain:"asd", weight:1},
+      {id:"literal", text:"Tend to interpret language literally", type:"freq14", domain:"asd", weight:0.8}
     ]
   },
   {
@@ -221,7 +270,8 @@ const SECTIONS = [
       ], domain:"sleep", weight:1.6},
       {id:"insomnia", text:"Trouble falling or staying asleep", type:"freq14", domain:"sleep", weight:1.4},
       {id:"snore", text:"Loud snoring or witnessed apnea", type:"tf", domain:"sleep", weight:1.2},
-      {id:"night_wake", text:"Wake unrefreshed / multiple night awakenings", type:"freq14", domain:"sleep", weight:1.2}
+      {id:"night_wake", text:"Wake unrefreshed / multiple night awakenings", type:"freq14", domain:"sleep", weight:1.2},
+      {id:"shift_work", text:"Irregular schedule / shift work", type:"tf", domain:"sleep", weight:1}
     ]
   },
   {
@@ -237,7 +287,8 @@ const SECTIONS = [
       ], domain:"nutrition", weight:1},
       {id:"fruitveg", text:"Fruit/veg servings per day", type:"mcq", options:[
         {label:"0", value:1},{label:"1", value:0.8},{label:"2–3", value:0.5},{label:"4+", value:0.2}
-      ], domain:"nutrition", weight:1}
+      ], domain:"nutrition", weight:1},
+      {id:"supplements", text:"Taking B12/D/iron or multivitamin regularly", type:"tf", domain:"nutrition", weight:0.8, invert:true}
     ]
   },
   {
@@ -257,7 +308,10 @@ const SECTIONS = [
       {id:"anhedonia", text:"Little interest/pleasure in things", type:"freq14", domain:"mood", weight:1.6},
       {id:"worry", text:"Excessive worry / racing thoughts", type:"freq14", domain:"mood", weight:1.2},
       {id:"panic", text:"Panic attacks or near‑panic", type:"freq14", domain:"mood", weight:1.3},
-      {id:"irritable", text:"Irritability / anger bursts", type:"freq14", domain:"mood", weight:1}
+      {id:"irritable", text:"Irritability / anger bursts", type:"freq14", domain:"mood", weight:1},
+      {id:"motivation", text:"Motivation at least enough to start one task/day", type:"mcq", options:[
+        {label:"No days", value:1}, {label:"Some days", value:0.6}, {label:"Most days", value:0.3}
+      ], domain:"mood", weight:1.2, invert:true}
     ]
   },
   {
@@ -265,7 +319,10 @@ const SECTIONS = [
       {id:"overwhelm", text:"Felt overwhelmed by routine tasks", type:"freq14", domain:"stress", weight:1.4},
       {id:"exhaust", text:"Exhaustion not relieved by rest", type:"freq14", domain:"stress", weight:1.4},
       {id:"avoid_work", text:"Avoided tasks/work you usually do", type:"freq14", domain:"stress", weight:1.2},
-      {id:"cynicism", text:"Cynicism / detachment", type:"freq14", domain:"stress", weight:1}
+      {id:"cynicism", text:"Cynicism / detachment", type:"freq14", domain:"stress", weight:1},
+      {id:"breaks", text:"Took short breaks (2–5 min) every hour while working", type:"mcq", options:[
+        {label:"No", value:1}, {label:"Sometimes", value:0.6}, {label:"Yes, regularly", value:0.2}
+      ], domain:"stress", weight:0.8, invert:true}
     ]
   },
   {
@@ -273,33 +330,40 @@ const SECTIONS = [
       {id:"initiate", text:"Hard to start tasks even when important", type:"freq14", domain:"exec", weight:1.3},
       {id:"organize", text:"Trouble organizing steps/materials", type:"freq14", domain:"exec", weight:1.2},
       {id:"lose_items", text:"Lose items (keys, wallet, phone)", type:"freq14", domain:"exec", weight:1},
-      {id:"switch", text:"Hard to switch tasks once engaged", type:"freq14", domain:"exec", weight:1}
+      {id:"switch", text:"Hard to switch tasks once engaged", type:"freq14", domain:"exec", weight:1},
+      {id:"plan_week", text:"Planned week with 3 priorities/day", type:"mcq", options:[
+        {label:"No", value:1}, {label:"Partially", value:0.6}, {label:"Yes", value:0.2}
+      ], domain:"exec", weight:0.8, invert:true}
     ]
   },
   {
     id:"memory", title:"Memory Specifics", desc:"Short‑term and prospective memory.", items:[
       {id:"appt", text:"Forgot appointments despite reminders", type:"freq14", domain:"memory", weight:1.4},
       {id:"conv", text:"Forgot parts of recent conversations", type:"freq14", domain:"memory", weight:1.4},
-      {id:"day_gaps", text:"Can't recall parts of the day", type:"freq14", domain:"memory", weight:1.6}
+      {id:"day_gaps", text:"Can't recall parts of the day", type:"freq14", domain:"memory", weight:1.6},
+      {id:"steps", text:"Lose track of multi‑step tasks", type:"freq14", domain:"memory", weight:1.2}
     ]
   },
   {
     id:"sensory", title:"Sensory", desc:"Noise/light/touch sensitivity.", items:[
       {id:"noise", text:"Noise feels painful or overwhelming", type:"freq14", domain:"sensory", weight:1.2},
       {id:"light", text:"Bright light triggers discomfort/headache", type:"freq14", domain:"sensory", weight:1.2},
-      {id:"touch", text:"Certain fabrics/textures feel intolerable", type:"freq14", domain:"sensory", weight:1}
+      {id:"touch", text:"Certain fabrics/textures feel intolerable", type:"freq14", domain:"sensory", weight:1},
+      {id:"smell", text:"Strong smells trigger discomfort/nausea", type:"freq14", domain:"sensory", weight:1}
     ]
   },
   {
     id:"support", title:"Social & Support", desc:"People and structure around you.", items:[
       {id:"isolation", text:"Spent most days alone / isolated", type:"freq14", domain:"social", weight:1.2},
       {id:"has_support", text:"Have at least one person you can call for help", type:"tf", domain:"social", weight:1, invert:true},
-      {id:"structure", text:"Followed any daily routine (meals, walk, sleep set time)", type:"freq14", domain:"social", weight:1, invert:true}
+      {id:"structure", text:"Followed any daily routine (meals, walk, sleep set time)", type:"freq14", domain:"social", weight:1, invert:true},
+      {id:"outside", text:"Time outdoors (most days)", type:"mcq", options:[
+        {label:"Rarely", value:1}, {label:"Sometimes", value:0.6}, {label:"Most days", value:0.2}
+      ], domain:"social", weight:0.8, invert:true}
     ]
   }
 ];
 
-// Domains list for summary display order
 const DOMAINS = [
   {id:"grief", label:"Grief/Numbing"},
   {id:"ptsd", label:"Trauma/PTSD"},
@@ -334,7 +398,7 @@ function renderNav(){
 }
 
 function renderSections(){
-  mainEl.innerHTML = SECTIONS.map((s,idx)=>{
+  mainEl.innerHTML = COVERAGE_HTML + SECTIONS.slice(1).map((s,idx)=>{
     return `<section class="card section" id="${s.id}" ${idx!==0? 'style="display:none"':''}>
       <h2>${s.title}</h2>
       <p class="muted">${s.desc}</p>
@@ -405,11 +469,12 @@ function hintFor(it){
 function goto(id){
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active', b.dataset.goto===id));
   document.querySelectorAll('main .section').forEach(s=>s.style.display = (s.id===id? 'block':'none'));
+  if(id==='front'){ window.scrollTo({top:0,behavior:'smooth'}); return; }
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
 // ======= STATE =======
-const KEY='screener_v1';
+const KEY='screener_v2';
 function getState(){ try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch{ return {} } }
 function setState(s){ localStorage.setItem(KEY, JSON.stringify(s)) }
 function getAns(id){ return getState()[id] }
@@ -442,7 +507,7 @@ function updateProgress(){
   document.getElementById('progressBar').style.width = pct+"%";
 }
 
-// ======= SCORING =======
+// ======= SCORING & OVERLAPS =======
 function calculate(){
   const state=getState();
   const sums = {}; const weights = {}; const redFlags=[];
@@ -474,18 +539,75 @@ function colorForScore(p){
   return 'linear-gradient(90deg,#ff6b6b,#c9184a)';
 }
 
+function computeOverlaps(results){
+  // Pairwise average score when both domains >=50
+  const pairs=[];
+  for(let i=0;i<results.length;i++){
+    for(let j=i+1;j<results.length;j++){
+      const a=results[i], b=results[j];
+      if(a.score>=50 && b.score>=50){
+        const s = Math.round((a.score + b.score)/2);
+        pairs.push({a:a.label,b:b.label,score:s});
+      }
+    }
+  }
+  pairs.sort((x,y)=>y.score-x.score);
+  return pairs.slice(0,12);
+}
+
+function insights(results){
+  const get=(id)=>results.find(r=>r.domain===id)?.score||0;
+  const s = {
+    sleep:get('sleep'), tbi:get('tbi'), ptsd:get('ptsd'), grief:get('grief'), dissoc:get('dissoc'),
+    adhd:get('adhd'), asd:get('asd'), nutrition:get('nutrition'), mood:get('mood'), stress:get('stress'),
+    cog:get('cog')
+  };
+  const lines=[];
+  if(s.tbi>=60 && s.sleep>=60) lines.push('TBI + Sleep both elevated → consider post‑concussion protocol + sleep apnea/insomnia assessment.');
+  if(s.ptsd>=65 && s.dissoc>=60) lines.push('Trauma + Dissociation co‑elevated → trauma‑informed therapy (EMDR/TF‑CBT) with grounding skills first.');
+  if(s.grief>=60 && s.mood>=60) lines.push('Grief + Mood both high → grief‑specialized counseling; screen for depression/anhedonia.');
+  if(s.adhd>=60 && s.exec>=60) lines.push('ADHD + Executive function → ADHD evaluation and scaffolding (timers, checklists, externalize tasks).');
+  if(s.nutrition>=55 && s.mood>=55) lines.push('Nutrition + Mood → get labs (B12, D, iron, TSH) and stabilize meals/hydration.');
+  if(s.cog>=65) lines.push('Cognitive Decline signals high → neuropsych testing + neurology consult.');
+  if(!lines.length) lines.push('No dominant interaction detected. Track for a week and re‑check.');
+  return lines;
+}
+
+// ======= CSV HELPERS (extracted to enable testing) =======
+function rowsToCSV(rows){
+  return rows
+    .map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(','))
+    .join('\n'); // FIX: explicit newline, not an unescaped line break
+}
+
 function showSummary(){
   const {results, redFlags} = calculate();
+  // Domain bars
   const sumEl = document.getElementById('summary');
   sumEl.innerHTML = results.map(r=>{
-    return `<div class="row"><div>${r.label}</div><div class="meter"><i style="width:${r.score}%;background:${colorForScore(r.score)}"></i></div><div>${r.score}</div></div>`
+    return `<div class=\"row\"><div>${r.label}</div><div class=\"meter\"><i style=\"width:${r.score}%;background:${colorForScore(r.score)}\"></i></div><div>${r.score}</div></div>`
   }).join('');
 
+  // Overlap explorer
+  const ov = computeOverlaps(results);
+  const ovHtml = `
+    <h3 style=\"margin-top:16px\">Overlap Explorer</h3>
+    <table class=\"table\"><thead><tr><th>Pair</th><th>Overlap score</th></tr></thead>
+    <tbody>
+      ${ov.map(p=>`<tr><td><span class=\"chipmini\">${p.a}</span> + <span class=\"chipmini\">${p.b}</span></td><td>${p.score}</td></tr>`).join('')}
+    </tbody></table>
+    <details><summary>Insights</summary>
+      <ul class=\"footnote\">${insights(results).map(t=>`<li>${t}</li>`).join('')}</ul>
+    </details>
+  `;
+  document.getElementById('overlap').innerHTML = ovHtml;
+
+  // Red flags
   const flags = document.getElementById('flags');
   if(redFlags.length){
-    flags.innerHTML = `<div class="q redflag"><strong class="danger-text">Red flags:</strong><ul>${redFlags.map(f=>`<li>${f.text}</li>`).join('')}</ul><div class="footnote">Consider urgent professional input for items above (e.g., 988/911 for safety; ER for severe acute neuro symptoms).</div></div>`
+    flags.innerHTML = `<div class=\"q redflag\"><strong class=\"danger-text\">Red flags:</strong><ul>${redFlags.map(f=>`<li>${f.text}</li>`).join('')}</ul><div class=\"footnote\">Consider urgent professional input (988/911 for safety; ER for acute neuro symptoms).</div></div>`
   } else {
-    flags.innerHTML = `<div class="q greenflag"><strong class="ok-text">No critical red flags marked.</strong> Continue tracking and address highest‑scoring lanes first.</div>`
+    flags.innerHTML = `<div class=\"q greenflag\"><strong class=\"ok-text\">No critical red flags marked.</strong> Address highest‑scoring lanes first and monitor overlaps.</div>`
   }
 }
 
@@ -495,17 +617,19 @@ function exportCSV(){
   const rows = [["timestamp","section","id","question","response_label","response_value"]];
   const ts = new Date().toISOString();
   SECTIONS.forEach(sec=>{
+    if(sec.id==='front') return;
     sec.items.forEach(it=>{
       const ans = state[it.id];
       rows.push([ts, sec.title, it.id, it.text.replaceAll('"','\''), ans? (ans.label||''):'', ans? ans.value:'' ]);
     })
   });
-  // Domain summary
   const {results} = calculate();
   rows.push([ts, 'SUMMARY', '---','Domain Score (0-100)','', '']);
   results.forEach(r=> rows.push([ts,'SUMMARY',r.domain,r.label,'',r.score]));
+  // Pairs
+  computeOverlaps(results).forEach(p=> rows.push([ts,'OVERLAP',`${p.a}+${p.b}`,'pair_score','',p.score]));
 
-  const csv = rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');
+  const csv = rowsToCSV(rows); // uses safe newline join
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -513,19 +637,49 @@ function exportCSV(){
   a.click();
 }
 
+// ======= LIGHTWEIGHT SELF-TESTS =======
+function runTests(){
+  const out=[];
+  function ok(name){ out.push(`✅ ${name}`) }
+  function fail(name, e){ out.push(`❌ ${name}: ${e && e.message ? e.message : e}`) }
+
+  try{
+    const {results} = calculate();
+    if(Array.isArray(results) && results.length===DOMAINS.length) ok('calculate() returns one score per domain');
+    else fail('calculate() returns one score per domain', new Error(`length=${results && results.length}`));
+  }catch(e){ fail('calculate() did not throw', e) }
+
+  try{
+    const csv = rowsToCSV([["a","b"],["x","He said \"hi\""]]);
+    if(csv.includes('\n') && csv.includes('""')) ok('rowsToCSV() escapes quotes and uses newline');
+    else fail('rowsToCSV() output format', new Error(csv));
+  }catch(e){ fail('rowsToCSV() did not throw', e) }
+
+  try{
+    const pairs = computeOverlaps([{label:'A',score:70},{label:'B',score:80},{label:'C',score:30}]);
+    if(pairs.length===1 && pairs[0].a==='A' && pairs[0].b==='B') ok('computeOverlaps() detects high pair');
+    else fail('computeOverlaps() pair logic', new Error(JSON.stringify(pairs)));
+  }catch(e){ fail('computeOverlaps() did not throw', e) }
+
+  const el=document.getElementById('testOutput');
+  if(el){ el.innerText = out.join('\n'); }
+  console.log('[Self‑tests]', out.join('\n'));
+}
+
 // ======= INIT =======
 renderNav();
 renderSections();
 updateProgress();
+runTests();
 
 // Events
-coachToggle.addEventListener('change', ()=>{ renderSections(); goto(document.querySelector('nav button.active')?.dataset.goto||SECTIONS[0].id) });
+coachToggle.addEventListener('change', ()=>{ renderSections(); goto(SECTIONS[0].id) });
 
 document.getElementById('calcBtn').addEventListener('click', showSummary);
 
 document.getElementById('exportBtn').addEventListener('click', exportCSV);
 
-document.getElementById('clearBtn').addEventListener('click', ()=>{ if(confirm('Clear all answers?')){ localStorage.removeItem(KEY); renderSections(); updateProgress(); document.getElementById('summary').innerHTML=''; document.getElementById('flags').innerHTML=''; }});
+document.getElementById('clearBtn').addEventListener('click', ()=>{ if(confirm('Clear all answers?')){ localStorage.removeItem(KEY); renderSections(); updateProgress(); document.getElementById('summary').innerHTML=''; document.getElementById('overlap').innerHTML=''; document.getElementById('flags').innerHTML=''; }});
 
 document.getElementById('printBtn').addEventListener('click', ()=>window.print());
 </script>
